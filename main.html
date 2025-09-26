@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AI vs AI Pong Environment</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden;
+            padding: 20px;
+        }
+
+        .header {
+            color: white; text-align: center; margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 32px; font-weight: bold; margin-bottom: 10px;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+        }
+
+        .header p {
+            font-size: 16px; opacity: 0.9;
+        }
+
+        .game-wrapper {
+            display: flex; gap: 30px; align-items: flex-start;
+        }
+
+        .left-panel, .right-panel {
+            width: 280px; display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .game-container {
+            position: relative;
+            border: 4px solid #fff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+        }
+
+        canvas { 
+            display: block; 
+            border-radius: 16px; 
+        }
+
+        .info-panel {
+            background: rgba(0,0,0,0.8); 
+            padding: 20px; 
+            border-radius: 15px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            color: #00ff88; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .score-section {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .ai-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .coordinates {
+            color: #00ff88; 
+            font-family: 'Courier New', monospace; 
+            font-size: 14px;
+        }
+
+        .coord-section { 
+            margin-bottom: 20px;
+        }
+
+        .coord-label { 
+            color: #fff; 
+            font-weight: bold; 
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .coord-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+
+        .control-panel {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            color: #ffaa00;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .control-button {
+            background: #333; 
+            border: 1px solid #555; 
+            color: white; 
+            padding: 12px 20px;
+            border-radius: 8px; 
+            margin: 5px 0; 
+            cursor: pointer; 
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .control-button:hover { 
+            background: #555; 
+            transform: translateY(-2px);
+        }
+
+        .control-button.active { 
+            background: #00aa00; 
+        }
+
+        .start-button {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .start-button:hover {
+            transform: scale(1.05);
+        }
+
+        .start-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .status-label {
+            color: #ccc;
+        }
+
+        .status-value {
+            font-weight: bold;
+        }
+
+        .game-over {
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%,-50%);
+            background: rgba(0,0,0,0.95); 
+            color: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg,#00ff88,#00cc6a); 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 30px;
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            transition: transform .2s;
+        }
+
+        .restart-btn:hover { 
+            transform: scale(1.05); 
+        }
+
+        .waiting-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .waiting-message .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .capture-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .capture-indicator.capturing {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+            animation: captureFlash 0.5s ease;
+        }
+
+        @keyframes captureFlash {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI vs AI Pong Environment</h1>
+        <p>On-Demand Image Capture • First to 15 points wins!</p>
+    </div>
+
+    <div class="game-wrapper">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- Score Panel -->
+            <div class="info-panel">
+                <div class="panel-title">🏆 SCOREBOARD</div>
+                <div class="score-item">
+                    <div class="ai-label">
+                        <span>🤖</span>
+                        <span>Neural Net A</span>
+                    </div>
+                    <div class="score-value" id="ai1Score">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="ai-label">
+                        <span>🤖</span>
+                        <span>Neural Net B</span>
+                    </div>
+                    <div class="score-value" id="ai2Score">0</div>
+                </div>
+            </div>
+
+            <!-- Ball State -->
+            <div class="info-panel">
+                <div class="panel-title">🏓 BALL STATE</div>
+                <div class="coordinates">
+                    <div class="coord-item">
+                        <span>Position X:</span>
+                        <span id="ballX">700</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Position Y:</span>
+                        <span id="ballY">350</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Velocity X:</span>
+                        <span id="ballVX">6</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Velocity Y:</span>
+                        <span id="ballVY">4</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="control-panel">
+                <div class="panel-title">🎮 GAME CONTROLS</div>
+                
+                <div class="control-section">
+                    <button class="start-button" id="startButton" onclick="startMatch()">
+                        PRESS ENTER TO START
+                    </button>
+                </div>
+
+                <div class="control-section">
+                    <div class="section-title">Game Actions:</div>
+                    <button class="control-button" onclick="pauseGame()">Pause/Resume</button>
+                    <button class="control-button" onclick="increaseSpeed()">Increase Speed</button>
+                    <button class="control-button" onclick="resetEverything()">Reset Everything</button>
+                </div>
+
+                <div class="control-section">
+                    <div class="section-title">Manual Capture:</div>
+                    <button class="control-button" onclick="manualCapture()">📸 Capture Now</button>
+                </div>
+
+                <div class="control-section">
+                    <div class="section-title">Score Control (local → server)</div>
+                    <button class="control-button" onclick="incrementScore('ai1', 1)">+1 Neural Net A</button>
+                    <button class="control-button" onclick="incrementScore('ai2', 1)">+1 Neural Net B</button>
+                    <button class="control-button" onclick="setScore(0, 0)">Reset Scores</button>
+                    <button class="control-button" onclick="pushScoreToServer()">Push current score to server</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div class="game-container">
+            <canvas id="gameCanvas" width="1400" height="700"></canvas>
+            
+            <div class="capture-indicator" id="captureIndicator">
+                READY TO CAPTURE
+            </div>
+
+            <div class="waiting-message" id="waitingMessage">
+                <div class="pulse">Press ENTER to start the match!</div>
+            </div>
+
+            <div class="game-over" id="gameOver">
+                <h2 id="gameResult">Match Complete!</h2>
+                <p>Final Score: <span id="finalScore"></span></p>
+                <button class="restart-btn" onclick="nextMatch()">Next Match</button>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- AI Model 1 Info -->
+            <div class="info-panel">
+                <div class="panel-title">🤖 AI MODEL 1</div>
+                <div class="coordinates">
+                    <div class="coord-item">
+                        <span>Position X:</span>
+                        <span id="ai1X">30</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Position Y:</span>
+                        <span id="ai1Y">275</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Target Y:</span>
+                        <span id="ai1Target">350</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Model 2 Info -->
+            <div class="info-panel">
+                <div class="panel-title">🤖 AI MODEL 2</div>
+                <div class="coordinates">
+                    <div class="coord-item">
+                        <span>Position X:</span>
+                        <span id="ai2X">1350</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Position Y:</span>
+                        <span id="ai2Y">275</span>
+                    </div>
+                    <div class="coord-item">
+                        <span>Target Y:</span>
+                        <span id="ai2Target">350</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Status -->
+            <div class="info-panel">
+                <div class="panel-title">📊 GAME STATUS</div>
+                
+                <div class="status-info">
+                    <span class="status-label">Match:</span>
+                    <span class="status-value" id="matchCount">1</span>
+                </div>
+                
+                <div class="status-info">
+                    <span class="status-label">Speed Level:</span>
+                    <span class="status-value" id="speedLevel">1x</span>
+                </div>
+                
+                <div class="status-info">
+                    <span class="status-label">WebSocket:</span>
+                    <span class="status-value" id="netStatus">disconnected</span>
+                </div>
+
+                <div class="status-info">
+                    <span class="status-label">Capture Mode:</span>
+                    <span class="status-value" id="captureMode">On-Demand</span>
+                </div>
+
+                <div class="status-info">
+                    <span class="status-label">Total Captures:</span>
+                    <span class="status-value" id="captureCount">0</span>
+                </div>
+
+                <div class="status-info">
+                    <span class="status-label">Last Capture:</span>
+                    <span class="status-value" id="lastCaptureTime">Never</span>
+                </div>
+
+                <div class="control-section" style="margin-top: 15px;">
+                    <div class="section-title">AI Control Mode:</div>
+                    <button class="control-button active" id="autoMode" onclick="setAIMode('auto')">Auto AI</button>
+                    <button class="control-button" id="remoteMode" onclick="setAIMode('remote')">Remote AI</button>
+                </div>
+
+                <div class="control-section">
+                    <div class="section-title">Image Quality:</div>
+                    <button class="control-button" onclick="setImageQuality(0.6)">Low (60%)</button>
+                    <button class="control-button active" onclick="setImageQuality(0.8)">Medium (80%)</button>
+                    <button class="control-button" onclick="setImageQuality(1.0)">High (100%)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ----- Canvas and context -----
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ----- Game state -----
+    let gameRunning = false;
+    let gamePaused = false;
+    let gameStarted = false;
+    let gameStartTime = Date.now();
+    let matchCount = 1;
+    let aiMode = 'auto'; // 'auto' or 'remote'
+
+    // Ball (larger playground)
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 12,
+        velocityX: 6,
+        velocityY: 4,
+        baseSpeed: 6,
+        currentSpeed: 6,
+        lastHit: null
+    };
+
+    // AI Model 1 paddle (left side)
+    const ai1Paddle = {
+        x: 30,
+        y: canvas.height / 2 - 75,
+        width: 20,
+        height: 150,
+        speed: 10,
+        targetY: canvas.height / 2,
+        responseTime: 0
+    };
+
+    // AI Model 2 paddle (right side)  
+    const ai2Paddle = {
+        x: canvas.width - 50,
+        y: canvas.height / 2 - 75,
+        width: 20,
+        height: 150,
+        speed: 10,
+        targetY: canvas.height / 2,
+        responseTime: 0
+    };
+
+    let ai1Score = 0;
+    let ai2Score = 0;
+    let currentSpeedLevel = 1;
+
+    // ----- Capture system variables -----
+    let imageQuality = 0.8; // JPEG compression quality (0.0 to 1.0)
+    let totalCaptures = 0;
+    let lastCaptureTime = null;
+
+    // ----- WebSocket realtime communication -----
+    const WS_URL = "ws://127.0.0.1:8000/ws";
+    let ws = null;
+    let wsConnected = false;
+    let wsReconnectDelay = 2000;
+    const netStatusEl = document.getElementById('netStatus');
+    let pendingAIRequests = new Map();
+
+    function setNetStatus(text, color = null) {
+        netStatusEl.textContent = text;
+        if (color) netStatusEl.style.color = color;
+        else netStatusEl.style.color = '';
+    }
+
+    function connectWS() {
+        try {
+            ws = new WebSocket(WS_URL);
+        } catch (err) {
+            console.warn("WS connection attempt failed:", err);
+            scheduleReconnect();
+            return;
+        }
+
+        ws.addEventListener('open', () => {
+            console.log("WebSocket connected to", WS_URL);
+            wsConnected = true;
+            setNetStatus('connected', '#80ff80');
+        });
+
+        ws.addEventListener('message', (ev) => {
+            try {
+                const message = JSON.parse(ev.data);
+                handleServerMessage(message);
+            } catch (e) {
+                console.warn("Invalid JSON from server:", ev.data);
+            }
+        });
+
+        ws.addEventListener('close', () => {
+            console.log("WebSocket closed — reconnecting...");
+            wsConnected = false;
+            setNetStatus('disconnected', '#ff8080');
+            scheduleReconnect();
+        });
+
+        ws.addEventListener('error', (err) => {
+            console.warn("WebSocket error", err);
+            try { ws.close(); } catch (e) {}
+        });
+    }
+
+    let reconnectTimer = null;
+    function scheduleReconnect() {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            connectWS();
+        }, wsReconnectDelay);
+    }
+
+    // Handle all server messages
+    function handleServerMessage(message) {
+        switch(message.type) {
+            case 'capture_request':
+                handleCaptureRequest(message);
+                break;
+            case 'ai_prediction':
+                handleAIResponse(message);
+                break;
+            case 'score_update':
+                handleScoreUpdate(message);
+                break;
+            default:
+                console.log('Unknown message type:', message.type);
+        }
+    }
+
+    // Handle score_update messages from server
+    function handleScoreUpdate(msg) {
+        // Server message contains ai1Score, ai2Score, match (see server.py)
+        if (msg.ai1Score !== undefined) ai1Score = parseInt(msg.ai1Score) || 0;
+        if (msg.ai2Score !== undefined) ai2Score = parseInt(msg.ai2Score) || 0;
+        if (msg.match !== undefined) {
+            matchCount = parseInt(msg.match) || matchCount;
+        }
+        updateUI();
+    }
+
+    // Handle capture requests from server
+    function handleCaptureRequest(message) {
+        console.log('Received capture request:', message.requestId);
+        
+        // Show visual feedback
+        showCaptureIndicator();
+        
+        // Capture and send image
+        captureAndSendImage(message.requestId, message.timestamp);
+    }
+
+    // Handle AI model responses
+    function handleAIResponse(response) {
+        const requestTime = pendingAIRequests.get(response.requestId);
+        if (requestTime) {
+            pendingAIRequests.delete(response.requestId);
+        }
+
+        if (response.model === 'ai1' && response.targetY !== undefined) {
+            ai1Paddle.targetY = Math.max(75, Math.min(canvas.height - 75, response.targetY));
+        }
+        if (response.model === 'ai2' && response.targetY !== undefined) {
+            ai2Paddle.targetY = Math.max(75, Math.min(canvas.height - 75, response.targetY));
+        }
+    }
+
+    // Capture current canvas state and send to server
+ // Capture current canvas state and send to server
+function captureAndSendImage(requestId = null, requestTimestamp = null) {
+    if (!wsConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+        console.warn('Cannot capture: WebSocket not connected');
+        return false;
+    }
+
+    try {
+        // Convert canvas to base64 image
+        const base64Image = canvas.toDataURL('image/jpeg', imageQuality);
+        const currentTime = Date.now();
+        
+        // Calculate approximate image size
+        const imageSizeKB = Math.round((base64Image.length * 0.75) / 1024);
+
+        // IMPORTANT: include type and requestId so the server can match the capture
+        const captureData = {
+            type: "image_capture",           // REQUIRED for server to recognize reply
+            requestId: requestId || null,    // REQUIRED to match pending /capture request
+            captureTimestamp: currentTime,
+            imageData: base64Image,
+            format: 'jpeg',
+            imageSizeKB: imageSizeKB,
+            requestedAt: requestTimestamp || null
+        };
+
+        ws.send(JSON.stringify(captureData));
+        
+        // Update capture statistics
+        totalCaptures++;
+        lastCaptureTime = new Date(currentTime).toLocaleTimeString();
+        updateCaptureStats();
+        
+        console.log(`Image captured and sent: ${imageSizeKB}KB (requestId=${requestId})`);
+        return true;
+        
+    } catch (e) {
+        console.warn("Capture and send failed:", e);
+        return false;
+    }
+}
+
+    // Manual capture function (for testing)
+    function manualCapture() {
+        if (captureAndSendImage()) {
+            showCaptureIndicator();
+        }
+    }
+
+    // Show visual capture indicator
+    function showCaptureIndicator() {
+        const indicator = document.getElementById('captureIndicator');
+        indicator.textContent = '📸 CAPTURING...';
+        indicator.classList.add('capturing');
+        
+        setTimeout(() => {
+            indicator.textContent = 'READY TO CAPTURE';
+            indicator.classList.remove('capturing');
+        }, 500);
+    }
+
+    // Update capture statistics display
+    function updateCaptureStats() {
+        document.getElementById('captureCount').textContent = totalCaptures;
+        document.getElementById('lastCaptureTime').textContent = lastCaptureTime || 'Never';
+    }
+
+    // Request AI predictions (separate from captures)
+    function requestAIPredictions() {
+        if (!wsConnected || !ws || ws.readyState !== WebSocket.OPEN || aiMode !== 'remote') return;
+
+        const requestId = `pred_req_${Date.now()}_${Math.random()}`;
+        pendingAIRequests.set(requestId, Date.now());
+
+        const predictionRequest = {
+            type: "ai_prediction_request",
+            requestId: requestId,
+            timestamp: Date.now(),
+            gameState: {
+                ball: {
+                    x: Math.round(ball.x),
+                    y: Math.round(ball.y),
+                    velocityX: Math.round(ball.velocityX * 10) / 10,
+                    velocityY: Math.round(ball.velocityY * 10) / 10,
+                    radius: ball.radius
+                },
+                ai1Paddle: {
+                    x: ai1Paddle.x,
+                    y: Math.round(ai1Paddle.y),
+                    width: ai1Paddle.width,
+                    height: ai1Paddle.height
+                },
+                ai2Paddle: {
+                    x: ai2Paddle.x,
+                    y: Math.round(ai2Paddle.y),
+                    width: ai2Paddle.width,
+                    height: ai2Paddle.height
+                },
+                canvasWidth: canvas.width,
+                canvasHeight: canvas.height,
+                speedLevel: currentSpeedLevel
+            },
+            requestedPredictions: ["ai1", "ai2"]
+        };
+
+        try {
+            ws.send(JSON.stringify(predictionRequest));
+        } catch (e) {
+            console.warn("WS prediction request failed:", e);
+        }
+    }
+
+    // Set image quality
+    function setImageQuality(quality) {
+        imageQuality = quality;
+        
+        // Update button states
+        document.querySelectorAll('.control-section:last-child .control-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const qualityPercent = Math.round(quality * 100);
+        document.querySelectorAll('.control-section:last-child .control-button').forEach(btn => {
+            if (btn.textContent.includes(`${qualityPercent}%`)) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // Start WebSocket connection
+    connectWS();
+
+    // ----- Game logic -----
+    function updateAIPaddles() {
+        if (aiMode === 'auto') {
+            // Built-in AI logic for demonstration
+            updateAutoAI();
+        } else {
+            // Use predictions from remote AI models
+            updateRemoteAI();
+        }
+    }
+
+    function updateAutoAI() {
+        // AI1 (left paddle) - Predictive AI
+        const timeToReachPaddle = Math.abs(ball.x - ai1Paddle.x) / Math.abs(ball.velocityX);
+        const predictedY = ball.y + (ball.velocityY * timeToReachPaddle);
+        ai1Paddle.targetY = Math.max(75, Math.min(canvas.height - 75, predictedY));
+
+        // AI2 (right paddle) - Reactive AI with slight delay
+        const ai2Center = ai2Paddle.y + ai2Paddle.height / 2;
+        const diff = ball.y - ai2Center;
+        if (Math.abs(diff) > 20) {
+            ai2Paddle.targetY = ball.y;
+        }
+
+        // Smooth movement towards target
+        moveToTarget(ai1Paddle);
+        moveToTarget(ai2Paddle);
+    }
+
+    function updateRemoteAI() {
+        // Move paddles towards targets set by remote AI
+        moveToTarget(ai1Paddle);
+        moveToTarget(ai2Paddle);
+        
+        // Request new predictions periodically
+        if (gameRunning && Math.random() < 0.1) { // 10% chance each frame
+            requestAIPredictions();
+        }
+    }
+
+    function moveToTarget(paddle) {
+        const center = paddle.y + paddle.height / 2;
+        const diff = paddle.targetY - center;
+        
+        if (Math.abs(diff) > 5) {
+            const moveAmount = Math.min(Math.abs(diff), paddle.speed);
+            paddle.y += diff > 0 ? moveAmount : -moveAmount;
+        }
+        
+        // Keep paddle within bounds
+        paddle.y = Math.max(0, Math.min(canvas.height - paddle.height, paddle.y));
+    }
+
+
+    function updateBall() {
+        // Sub-stepping to reduce tunneling: choose substeps based on speed
+        const speed = Math.sqrt(ball.velocityX * ball.velocityX + ball.velocityY * ball.velocityY) || 1;
+        // roughly one substep per (ball.radius) pixels moved horizontally
+        const substeps = Math.min(8, Math.max(1, Math.ceil(Math.abs(ball.velocityX) / (ball.radius))));
+        const dxStep = ball.velocityX / substeps;
+        const dyStep = ball.velocityY / substeps;
+
+        for (let s = 0; s < substeps; s++) {
+            ball.x += dxStep;
+            ball.y += dyStep;
+
+            // Top / bottom wall bounce
+            if (ball.y - ball.radius <= 0) {
+                ball.y = ball.radius;
+                ball.velocityY = -ball.velocityY;
+            } else if (ball.y + ball.radius >= canvas.height) {
+                ball.y = canvas.height - ball.radius;
+                ball.velocityY = -ball.velocityY;
+            }
+
+            // LEFT PADDLE (ai1) collision
+            if (ball.velocityX < 0 &&
+                ball.x - ball.radius <= ai1Paddle.x + ai1Paddle.width &&
+                ball.x - ball.radius >= ai1Paddle.x - Math.abs(dxStep) && // allow small penetration tolerance
+                ball.y >= ai1Paddle.y &&
+                ball.y <= ai1Paddle.y + ai1Paddle.height) {
+
+                // move ball to the surface to avoid sticking
+                ball.x = ai1Paddle.x + ai1Paddle.width + ball.radius;
+
+                // Compute vertical deflection relative to LEFT paddle center (fix: use ai1Paddle)
+                const paddleCenterY = ai1Paddle.y + ai1Paddle.height / 2;
+                const hitPos = (ball.y - paddleCenterY) / (ai1Paddle.height / 2);
+                // limit influence so it doesn't explode
+                const maxDeflect = 4;
+                ball.velocityY = ball.velocityY + (hitPos * maxDeflect);
+                ball.velocityX = Math.abs(ball.velocityX) * 1.0; // ensure moving right
+
+                ball.lastHit = 'ai1';
+            }
+
+            // RIGHT PADDLE (ai2) collision - symmetric
+            if (ball.velocityX > 0 &&
+                ball.x + ball.radius >= ai2Paddle.x &&
+                ball.x + ball.radius <= ai2Paddle.x + ai2Paddle.width + Math.abs(dxStep) &&
+                ball.y >= ai2Paddle.y &&
+                ball.y <= ai2Paddle.y + ai2Paddle.height) {
+
+                // move ball to the surface
+                ball.x = ai2Paddle.x - ball.radius;
+
+                // Compute vertical deflection relative to RIGHT paddle center
+                const paddleCenterY = ai2Paddle.y + ai2Paddle.height / 2;
+                const hitPos = (ball.y - paddleCenterY) / (ai2Paddle.height / 2);
+                const maxDeflect = 4;
+                ball.velocityY = ball.velocityY + (hitPos * maxDeflect);
+                ball.velocityX = -Math.abs(ball.velocityX) * 1.0; // ensure moving left
+
+                ball.lastHit = 'ai2';
+            }
+
+            // If a score occurs mid-substep, break early
+            if (ball.x < -50 || ball.x > canvas.width + 50) break;
+        }
+
+        // Scoring: after substeps check if out-of-bounds
+        if (ball.x < 0) {
+            ai2Score++;
+            // push server-side score update (best-effort)
+            pushScoreToServer(false); // send automatically, but don't await
+            resetBall();
+            if (ai2Score >= 15) endGame('Neural Net B Wins!');
+        } else if (ball.x > canvas.width) {
+            ai1Score++;
+            pushScoreToServer(false);
+            resetBall();
+            if (ai1Score >= 15) endGame('Neural Net A Wins!');
+        }
+    }
+
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        ball.velocityX = dir * ball.currentSpeed;
+        ball.velocityY = (Math.random() - 0.5) * ball.currentSpeed * 0.8;
+        ball.lastHit = null;
+    }
+
+    function updateUI() {
+        document.getElementById('ballX').textContent = Math.round(ball.x);
+        document.getElementById('ballY').textContent = Math.round(ball.y);
+        document.getElementById('ballVX').textContent = Math.round(ball.velocityX * 10) / 10;
+        document.getElementById('ballVY').textContent = Math.round(ball.velocityY * 10) / 10;
+
+        document.getElementById('ai1X').textContent = Math.round(ai1Paddle.x);
+        document.getElementById('ai1Y').textContent = Math.round(ai1Paddle.y);
+        document.getElementById('ai1Target').textContent = Math.round(ai1Paddle.targetY);
+
+        document.getElementById('ai2X').textContent = Math.round(ai2Paddle.x);
+        document.getElementById('ai2Y').textContent = Math.round(ai2Paddle.y);
+        document.getElementById('ai2Target').textContent = Math.round(ai2Paddle.targetY);
+
+        document.getElementById('ai1Score').textContent = ai1Score;
+        document.getElementById('ai2Score').textContent = ai2Score;
+        document.getElementById('matchCount').textContent = matchCount;
+        document.getElementById('speedLevel').textContent = currentSpeedLevel + 'x';
+    }
+
+    function draw() {
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+        gradient.addColorStop(0,'rgba(15,25,45,0.95)');
+        gradient.addColorStop(1,'rgba(25,35,65,0.95)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        // Center dashed line
+        ctx.setLineDash([15,15]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, 0);
+        ctx.lineTo(canvas.width/2, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // AI paddles with glow effects
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00ff88';
+        ctx.fillStyle = '#00ff88';
+        ctx.fillRect(ai1Paddle.x, ai1Paddle.y, ai1Paddle.width, ai1Paddle.height);
+
+        ctx.shadowColor = '#ff4488';
+        ctx.fillStyle = '#ff4488';
+        ctx.fillRect(ai2Paddle.x, ai2Paddle.y, ai2Paddle.width, ai2Paddle.height);
+
+        // Target indicators for AI paddles (only show when game is running)
+        if (gameRunning) {
+            ctx.shadowBlur = 5;
+            ctx.strokeStyle = '#00ff8866';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ai1Paddle.x - 10, ai1Paddle.targetY);
+            ctx.lineTo(ai1Paddle.x + ai1Paddle.width + 10, ai1Paddle.targetY);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ff448866';
+            ctx.beginPath();
+            ctx.moveTo(ai2Paddle.x - 10, ai2Paddle.targetY);
+            ctx.lineTo(ai2Paddle.x + ai2Paddle.width + 10, ai2Paddle.targetY);
+            ctx.stroke();
+        }
+
+        // Ball with enhanced glow
+        ctx.shadowColor = ball.lastHit === 'ai1' ? '#00ff88' : ball.lastHit === 'ai2' ? '#ff4488' : '#ffffff';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+        ctx.fill();
+
+        // Ball velocity vector (for debugging - only show when game is running)
+        if (gameRunning) {
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ball.x, ball.y);
+            ctx.lineTo(ball.x + ball.velocityX * 10, ball.y + ball.velocityY * 10);
+            ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+    }
+
+    function gameLoop() {
+        if (!gameRunning || gamePaused) {
+            draw();
+            if (gameStarted) requestAnimationFrame(gameLoop);
+            return;
+        }
+        
+        updateAIPaddles();
+        updateBall();
+        updateUI();
+        draw();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startMatch() {
+        if (gameStarted) return;
+        
+        gameStarted = true;
+        gameRunning = true;
+        gamePaused = false;
+        gameStartTime = Date.now();
+        totalCaptures = 0;
+        lastCaptureTime = null;
+        
+        document.getElementById('waitingMessage').style.display = 'none';
+        document.getElementById('startButton').style.display = 'none';
+        
+        updateCaptureStats();
+        resetBall();
+        gameLoop();
+    }
+
+    function endGame(result) {
+        gameRunning = false;
+        document.getElementById('gameResult').textContent = result;
+        document.getElementById('finalScore').textContent = `${ai1Score} - ${ai2Score}`;
+        document.getElementById('gameOver').style.display = 'block';
+        // push final score to server (best-effort)
+        pushScoreToServer(false);
+    }
+
+    function nextMatch() {
+        matchCount++;
+        gameRunning = true;
+        gamePaused = false;
+        ai1Score = 0; 
+        ai2Score = 0;
+        gameStartTime = Date.now();
+
+        resetBall();
+        ai1Paddle.y = canvas.height / 2 - 75; 
+        ai2Paddle.y = canvas.height / 2 - 75;
+        ai1Paddle.targetY = canvas.height / 2;
+        ai2Paddle.targetY = canvas.height / 2;
+
+        document.getElementById('gameOver').style.display = 'none';
+        gameLoop();
+    }
+
+    function pauseGame() {
+        if (!gameStarted) return;
+        gamePaused = !gamePaused;
+        if (!gamePaused) gameLoop();
+    }
+
+    function increaseSpeed() {
+        if (!gameStarted) return;
+        currentSpeedLevel++;
+        ball.currentSpeed = ball.baseSpeed + (currentSpeedLevel - 1) * 1.5;
+
+        const speed = Math.sqrt(ball.velocityX ** 2 + ball.velocityY ** 2) || 1;
+        ball.velocityX = (ball.velocityX / speed) * ball.currentSpeed;
+        ball.velocityY = (ball.velocityY / speed) * ball.currentSpeed;
+    }
+
+    function resetEverything() {
+        gameStarted = false;
+        gameRunning = false;
+        gamePaused = false;
+        ai1Score = 0;
+        ai2Score = 0;
+        currentSpeedLevel = 1;
+        matchCount = 1;
+        gameStartTime = Date.now();
+        totalCaptures = 0;
+        lastCaptureTime = null;
+
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.velocityX = 6;
+        ball.velocityY = 4;
+        ball.currentSpeed = 6;
+        ball.lastHit = null;
+
+        ai1Paddle.y = canvas.height / 2 - 75;
+        ai2Paddle.y = canvas.height / 2 - 75;
+        ai1Paddle.targetY = canvas.height / 2;
+        ai2Paddle.targetY = canvas.height / 2;
+
+        document.getElementById('gameOver').style.display = 'none';
+        document.getElementById('waitingMessage').style.display = 'block';
+        document.getElementById('startButton').style.display = 'block';
+        
+        updateCaptureStats();
+        updateUI();
+        draw();
+    }
+
+    function setAIMode(mode) {
+        aiMode = mode;
+        document.getElementById('autoMode').classList.toggle('active', mode === 'auto');
+        document.getElementById('remoteMode').classList.toggle('active', mode === 'remote');
+        
+        if (mode === 'remote' && !wsConnected) {
+            connectWS();
+        }
+    }
+
+    // Keyboard controls
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !gameStarted) {
+            event.preventDefault();
+            startMatch();
+        }
+        if (event.key === ' ') {
+            event.preventDefault();
+            pauseGame();
+        }
+        if (event.key === 'c' || event.key === 'C') {
+            event.preventDefault();
+            manualCapture();
+        }
+    });
+
+    // --------------------
+    // Score API helpers
+    // --------------------
+
+    // POST current score to server. If awaitResponse is true, returns server JSON; otherwise fire-and-forget.
+    async function pushScoreToServer(awaitResponse = true) {
+        const payload = {
+            ai1: ai1Score,
+            ai2: ai2Score,
+            match: matchCount
+        };
+        const url = "/score"; // same origin
+        try {
+            const resp = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!awaitResponse) return;
+            const j = await resp.json();
+            console.log("Score POST response:", j);
+            return j;
+        } catch (e) {
+            console.warn("Failed to push score to server:", e);
+            return null;
+        }
+    }
+
+    // Increment local score and update UI (optionally push to server)
+    function incrementScore(which, delta = 1, pushToServer = true) {
+        if (which === 'ai1') ai1Score = Math.max(0, ai1Score + delta);
+        if (which === 'ai2') ai2Score = Math.max(0, ai2Score + delta);
+        updateUI();
+        if (pushToServer) pushScoreToServer(false);
+    }
+
+    // Set local scores explicitly
+    function setScore(a1, a2, pushToServer = true) {
+        ai1Score = parseInt(a1) || 0;
+        ai2Score = parseInt(a2) || 0;
+        updateUI();
+        if (pushToServer) pushScoreToServer(false);
+    }
+
+    // convenience wrapper triggered by UI
+    function setScoreFromUI(a1, a2) { setScore(a1, a2, true); }
+
+    // If page loads and you want to fetch current server score (GET /score)
+    async function fetchServerScore() {
+        try {
+            const resp = await fetch("/score");
+            const j = await resp.json();
+            if (j && j.ok && j.score) {
+                ai1Score = j.score.ai1 || 0;
+                ai2Score = j.score.ai2 || 0;
+                matchCount = j.score.match || matchCount;
+                updateUI();
+            }
+        } catch (e) {
+            console.warn("Could not fetch server score:", e);
+        }
+    }
+
+    // Initialize the game
+    updateUI();
+    updateCaptureStats();
+    draw();
+    // fetch server score at load so UI matches server's authoritative snapshot
+    fetchServerScore();
+
+    </script>
+</body>
+</html>
